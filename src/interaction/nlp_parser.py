@@ -83,9 +83,6 @@ class NLPParser:
                  "certainly", "sure thing", "right", "go ahead",
                  "sounds good", "lets do it", "why not"):
             return "dynamic"
-        # Common Whisper mishearings of "yes" (especially with "small" model)
-        if t in ("yinz", "yis", "yass", "yesss", "yees", "yas", "yus", "yiss"):
-            return "dynamic"
         if any(w in t for w in ("yes", "yeah", "yep", "dynamic", "sport",
                                 "active", "certainly", "sure", "agree",
                                 "go ahead", "ok")):
@@ -93,10 +90,7 @@ class NLPParser:
         # No-like → Rest Mode
         if t in ("no", "nope", "nah", "n", "no thanks"):
             return "rest"
-        # Common Whisper mishearings/truncations of "rest" ("small" model drops final 't')
-        if t in ("res", "ress", "rest "):
-            return "rest"
-        if any(w in t for w in ("rest", "res", "ras", "relax", "calm", "comfort",
+        if any(w in t for w in ("rest", "relax", "calm", "comfort",
                                 "no", "nope", "nah", "stay", "quiet",
                                 "peaceful", "chill")):
             return "rest"

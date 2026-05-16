@@ -126,13 +126,13 @@ Silence or unrecognised speech retries once (distinct prompts for each case). Af
 
 **Perception**: Camera → MediaPipe Face Landmarks (478-point model) → Mouth Aspect Ratio (MAR) → Exponential-decay yawn scoring. Not simple frame-counting: brief landmark jitter does not reset accumulated evidence. Yawn requires ~1.5s sustained wide mouth. Per-session MAR threshold calibration available (press `C`).
 
-**Voice Pipeline**: pyttsx3 TTS inquiry → Segmented recording (4-second chunks, up to 20 seconds, stops on first keyword hit) → Whisper `small` STT → Two-tier NLP (keyword matching at 0ms latency; DeepSeek API as fallback). Separate continuous VAD-based listener for unsolicited voice commands—always on, always bypasses the FSM.
+**Voice Pipeline**: pyttsx3 TTS inquiry → Segmented recording (4-second chunks, up to 20 seconds, stops on first keyword hit) → Baidu Cloud ASR API (HTTP POST, zero local model, 50k free calls/day) → Two-tier NLP (keyword matching at 0ms latency; DeepSeek API as fallback). Separate continuous VAD-based listener for unsolicited voice commands—always on, always bypasses the FSM.
 
 **State Management**: Thread-safe `SharedState` with a 6-state FSM polled at 60fps by the Pygame main loop. Independent threads for camera capture, TTS, and continuous voice listening. Thread watchdog auto-restarts crashed threads up to 3 times.
 
-**Config**: All parameters in `config.json` (101 keys across perception, audio, VAD, TTS, UI). Hot-reload at runtime with `F5`—no restart needed. Per-session MAR calibration writes threshold back to config.
+**Config**: All parameters in `config.json` (~90 keys across perception, audio, VAD, TTS, UI, ASR). Hot-reload at runtime with `F5`—no restart needed. Per-session MAR calibration writes threshold back to config.
 
-**Cross-platform**: Tested on Windows (pyttsx3 via SAPI5). macOS (NSSpeechSynthesizer) and Linux (espeak) backends are available but untested.
+**Cross-platform**: Tested on Windows (pyttsx3 via SAPI5, Baidu ASR API). STT is cloud-based and platform-independent. macOS (NSSpeechSynthesizer) and Linux (espeak) TTS backends are available but untested.
 
 ---
 
@@ -140,7 +140,7 @@ Silence or unrecognised speech retries once (distinct prompts for each case). Af
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env       # add your DEEPSEEK_API_KEY (optional — keyword matching works without it)
+cp .env.example .env       # add BAIDU_ASR_API_KEY + BAIDU_ASR_SECRET_KEY (required for STT), DEEPSEEK_API_KEY (optional — keyword matching works without it)
 python main.py
 ```
 
@@ -165,7 +165,7 @@ This is a **desktop research prototype**, not a production system. Known gaps:
 
 - **No user study yet** — design claims about trust, agency, and non-intrusiveness are not yet empirically validated
 - **Single-modality perception** — MAR only; eye aspect ratio, head pose, and other fatigue signals not yet fused
-- **Whisper `small`** occasionally mishears short words; mitigated via expanded keyword dictionary (upgrading to faster-whisper medium int8 is the planned next step)
+- **Cloud-dependent STT** — Baidu ASR API requires internet; free tier caps at 50k calls/day. Local STT (faster-whisper) was attempted but blocked by ctranslate2 segfault on this machine
 - **Desktop simulation** — no real driving task, no steering wheel, no in-vehicle noise environment
 - **MAR threshold calibration is per-session only** — does not persist across restarts (factory default restored on each launch)
 
@@ -182,7 +182,8 @@ This is a **desktop research prototype**, not a production system. Known gaps:
 │   └── utils/               # CSV Data Logger, audio utilities
 ├── tests/                   # pytest suite (41 tests)
 ├── assets/                  # MediaPipe model, sounds, images
-├── v2/                      # Planning docs (PLAN, FLOW, TASKS, STRUCTURE)
+├── v2/                      # Planning docs — current version (PLAN, FLOW, TASKS, STRUCTURE, CHANGELOG)
+├── v3/                      # Planning docs — next version (in progress)
 ├── main.py                  # Entry point
 ├── config.py                # Config bridge (PEP 562 __getattr__)
 ├── config.json              # All runtime parameters (hot-reloadable)
@@ -196,7 +197,9 @@ This is a **desktop research prototype**, not a production system. Known gaps:
 | [v2/PLAN.md](v2/PLAN.md) | Feature list (F001–F014), architectural backlog (B01–B04), academic tracking items |
 | [v2/FLOW.md](v2/FLOW.md) | Feature dependency graph (Mermaid) with per-feature verification criteria |
 | [v2/TASKS.md](v2/TASKS.md) | Per-feature task checklist — all 14 features verified complete |
+| [v2/CHANGELOG.md](v2/CHANGELOG.md) | v2 completion record, known issues, items carried over to v3 |
 | [v2/PROJECT_STRUCTURE.md](v2/PROJECT_STRUCTURE.md) | Full directory tree with module descriptions and feature-ID annotations |
+| [v3/PLAN.md](v3/PLAN.md) | v3 plan — B02 STT migration to Baidu ASR API, pending architectural items |
 
 ## License
 

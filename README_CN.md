@@ -123,13 +123,13 @@ Monitoring ──检测到第2次哈欠──→ Yawn Detected → Inquiring ─
 
 **感知**：摄像头 → MediaPipe 面部 478 特征点 → 嘴部纵横比（MAR）→ 指数衰减评分模型。非简单连续帧计数：短暂特征点抖动不重置累积证据。单次哈欠需持续张嘴约 1.5 秒。支持按 `C` 键进行 30 秒个体化 MAR 阈值标定。
 
-**语音管道**：pyttsx3 TTS 播报询问 → 分段录音（4 秒一段，最多 20 秒，命中关键词即停）→ Whisper `small` STT 转写 → 两层 NLP 意图解析（关键词匹配 0ms 延迟；DeepSeek API 作为 fallback）。独立的持续 VAD 监听线程用于接收主动语音指令——始终在线，始终绕过 FSM。
+**语音管道**：pyttsx3 TTS 播报询问 → 分段录音（4 秒一段，最多 20 秒，命中关键词即停）→ 百度云短语音识别 API（HTTP POST，零本地模型，每日 5 万次免费调用）→ 两层 NLP 意图解析（关键词匹配 0ms 延迟；DeepSeek API 作为 fallback）。独立的持续 VAD 监听线程用于接收主动语音指令——始终在线，始终绕过 FSM。
 
 **状态管理**：线程安全的 `SharedState` + 6 状态状态机，由 Pygame 主循环以 60fps 轮询。独立线程处理摄像头采集、TTS 播报、持续语音监听。线程看门狗自动重启崩溃线程（最多 3 次）。
 
-**配置**：所有参数集中于 `config.json`（101 项，涵盖感知、音频、VAD、TTS、UI）。运行时按 `F5` 热重载，无需重启。个体化标定结果自动写回 config.json。
+**配置**：所有参数集中于 `config.json`（约 90 项，涵盖感知、音频、VAD、TTS、UI、ASR）。运行时按 `F5` 热重载，无需重启。个体化标定结果自动写回 config.json。
 
-**跨平台**：当前仅在 Windows 测试（pyttsx3 使用 SAPI5）。macOS（NSSpeechSynthesizer）和 Linux（espeak）后端可用但未经测试。
+**跨平台**：当前仅在 Windows 测试（pyttsx3 SAPI5、百度 ASR API）。STT 为云端服务，天然跨平台。macOS（NSSpeechSynthesizer）和 Linux（espeak）TTS 后端可用但未经测试。
 
 ---
 
@@ -137,7 +137,7 @@ Monitoring ──检测到第2次哈欠──→ Yawn Detected → Inquiring ─
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env       # 填入 DEEPSEEK_API_KEY（可选——关键词匹配可独立工作）
+cp .env.example .env       # 填入 BAIDU_ASR_API_KEY + BAIDU_ASR_SECRET_KEY（STT 必需），DEEPSEEK_API_KEY（可选——关键词匹配可独立工作）
 python main.py
 ```
 
@@ -162,7 +162,7 @@ python main.py
 
 - **尚未进行用户实验** — 关于信任、主体性、非侵入性的设计主张尚未经实证验证
 - **单模态感知** — 仅依赖 MAR；眼睑闭合度（EAR）、头部姿态等多模态疲劳信号尚未融合
-- **Whisper `small`** 对短单词偶有误识别；通过扩展关键词词典缓解（后续计划升级为 faster-whisper medium int8）
+- **STT 依赖云端** — 百度 ASR API 需要网络连接；免费额度每日 5 万次调用。本地方案（faster-whisper）曾尝试但因 ctranslate2 segfault 无法在此机器使用
 - **桌面模拟** — 无真实驾驶任务、无方向盘、无车内噪声环境
 - **MAR 阈值标定为会话级** — 每次启动恢复为出厂默认值 0.48，需重新标定
 
@@ -179,7 +179,8 @@ python main.py
 │   └── utils/               # CSV 数据记录、音频工具
 ├── tests/                   # pytest 测试套件（41 个测试）
 ├── assets/                  # MediaPipe 模型、音效、图片
-├── v2/                      # 规划文档（PLAN、FLOW、TASKS、STRUCTURE）
+├── v2/                      # 规划文档 — 当前版本（PLAN、FLOW、TASKS、STRUCTURE、CHANGELOG）
+├── v3/                      # 规划文档 — 下一版本（施工中）
 ├── main.py                  # 入口
 ├── config.py                # 配置桥接（PEP 562 __getattr__）
 ├── config.json              # 全部运行时参数（支持热重载）
@@ -193,7 +194,9 @@ python main.py
 | [v2/PLAN.md](v2/PLAN.md) | 功能清单（F001–F014）、架构待办列表（B01–B04）、学术论证跟踪 |
 | [v2/FLOW.md](v2/FLOW.md) | 功能依赖图（Mermaid）+ 每项功能的验收标准 |
 | [v2/TASKS.md](v2/TASKS.md) | 逐功能任务清单——全部 14 项功能已验证完成 |
+| [v2/CHANGELOG.md](v2/CHANGELOG.md) | v2 完成记录、已知问题、移交 v3 事项 |
 | [v2/PROJECT_STRUCTURE.md](v2/PROJECT_STRUCTURE.md) | 完整目录树、模块说明及功能 ID 标注 |
+| [v3/PLAN.md](v3/PLAN.md) | v3 计划 — B02 STT 迁至百度 ASR API、待办架构项 |
 
 ## License
 
