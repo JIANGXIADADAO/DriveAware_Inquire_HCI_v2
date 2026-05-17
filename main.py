@@ -1,4 +1,5 @@
 import logging
+import os
 from dotenv import load_dotenv
 from src.core.shared_state import SharedState
 
@@ -56,13 +57,13 @@ def main():
         logger.warning(f"TTS unavailable: {e}. Voice output disabled.")
         tts = None
 
-    # Load Whisper STT
+    # Load STT engine
     stt = STTEngine()
     try:
         stt.load()
-        shared.update(whisper_ready=stt.ready)
+        shared.update(stt_ready=stt.ready)
     except Exception as e:
-        logger.warning(f"Whisper failed to load: {e}. STT disabled.")
+        logger.warning(f"STT failed to load: {e}. STT disabled.")
 
     # Init NLP parser
     nlp = NLPParser()

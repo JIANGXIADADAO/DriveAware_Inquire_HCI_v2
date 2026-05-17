@@ -33,7 +33,7 @@ class SharedState:
     worker_done: bool = False
 
     # API available flags
-    whisper_ready: bool = False
+    stt_ready: bool = False
     deepseek_ready: bool = False
 
     # Current cockpit mode (used by FSM to gate yawn detection)

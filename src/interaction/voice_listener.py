@@ -8,7 +8,7 @@ from src.utils.audio import resample_to_16khz
 
 
 class VoiceListener(threading.Thread):
-    """Continuously listens for voice commands via VAD + Whisper + NLP.
+    """Continuously listens for voice commands via VAD + STT + NLP.
 
     Uses an adaptive threshold: the noise floor is tracked continuously
     and the effective threshold is max(SPEECH_THRESHOLD, noise_floor * MULTIPLIER).

@@ -304,7 +304,7 @@ class CockpitApp:
         self._play_music(self.current_mode)
 
         # Clean slate: camera may have accumulated yawns during
-        # Whisper model loading before the main loop started.
+        # STT engine loading before the main loop started.
         if self.current_mode.name == "rest":
             self._enter_rest_mode()
 

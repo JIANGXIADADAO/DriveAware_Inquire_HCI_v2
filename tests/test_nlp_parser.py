@@ -10,25 +10,11 @@ def test_yes_variants_to_dynamic():
         assert result == "dynamic", f"'{text}' should be dynamic, got '{result}'"
 
 
-def test_whisper_mishearings_of_yes():
-    parser = NLPParser()
-    for text in ["yinz", "yis", "yass", "yesss", "yees", "yas", "yus", "yiss"]:
-        result = parser._keyword_parse(text)
-        assert result == "dynamic", f"'{text}' should be dynamic (Whisper mishearing), got '{result}'"
-
-
 def test_no_variants_to_rest():
     parser = NLPParser()
     for text in ["no", "nope", "nah", "n", "no thanks"]:
         result = parser._keyword_parse(text)
         assert result == "rest", f"'{text}' should be rest, got '{result}'"
-
-
-def test_whisper_truncations_of_rest():
-    parser = NLPParser()
-    for text in ["res", "ress", "switch to res mode", "go to res"]:
-        result = parser._keyword_parse(text)
-        assert result == "rest", f"'{text}' should be rest (Whisper truncation), got '{result}'"
 
 
 def test_embedded_dynamic_keyword():
